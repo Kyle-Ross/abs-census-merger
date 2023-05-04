@@ -25,5 +25,5 @@ def accumulate_census(target_folder_path,  # Where the census folder is
 - Example output is included
 - Geo types include LGA, POA, SA1, SA2 etc
 - col_desc will determine whether column names are change via the config file
-- Use the metadata .xlsx file included in the datapack download to set up the config file with the field you want
+- Use the metadata .xlsx file included in the datapack download to set up the config file with the fields you want
 - Downloading the databack to the script folder will mean you don't need to update the path references
