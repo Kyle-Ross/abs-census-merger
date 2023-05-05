@@ -4,10 +4,10 @@ import json
 import os
 
 # Target folder path
-census_folder_path = r"\2021_GCP_all_for_AUS_short-header"
+census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_AUS_short-header\2021 Census GCP All Geographies for AUS"
 
 # Config file location
-config_file = r"config.csv"
+config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
 
 # Function to pretty print dictionaries
 def print_dict(target_dict):
