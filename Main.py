@@ -171,7 +171,7 @@ def accumulate_census(target_folder_path,  # Where the census folder is
     output_file_name = "Census Data" + "-" + geo_type + "_" + col_desc + "_" + col_affix + "-" + current_dt + ".csv"
 
     # Output the csv
-    merged_df.to_csv(os.path.join(output_folder, output_file_name))
+    merged_df.to_csv(os.path.join(output_folder, output_file_name), index=False)
 
 
 # Calling the function
