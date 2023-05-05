@@ -9,6 +9,7 @@ census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_
 # Config file location
 config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
 
+
 # Function to pretty print dictionaries
 def print_dict(target_dict):
     # Deals with dataframes in the dict
