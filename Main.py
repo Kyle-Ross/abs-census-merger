@@ -9,14 +9,6 @@ census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_
 # Config file location
 config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
 
-# Setting print options for dataframe QA outputs
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', 1000)
-pd.set_option('display.colheader_justify', 'center')
-pd.set_option('display.precision', 2)
-
-
 # Function to pretty print dictionaries
 def print_dict(target_dict):
     # Deals with dataframes in the dict
