@@ -236,7 +236,7 @@ def accumulate_census(target_folder_path,  # Where the census folder is
         new_df_unpivoted = new_df.melt(id_vars=[primary_key_col],
                                        value_vars=cols_to_unpivot,
                                        var_name=key_group,
-                                       value_name=f'{key_group} Count')
+                                       value_name=f'{key_group} Value')
 
         # Appending those dataframes to the results list
         pivoted_dfs_list.append(new_df_unpivoted)
