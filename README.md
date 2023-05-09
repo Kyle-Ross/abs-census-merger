@@ -15,6 +15,7 @@ A Python script which takes the census data pack from the ABS and instantly merg
 def accumulate_census(target_folder_path,  # Where the census folder is
                       config_path,  # Where the config folder is saved
                       geo_type,  # What spatial aggregation sub-folder to target
+                      output_mode='all',  # Select the output mode,  'merge', 'pivot' or 'all'
                       output_folder='',  # Set the location of the output folder, will be the script location by default
                       col_desc='short',  # Can be 'short' or 'long'
                       col_affix='prefix'):  # Affix a 'prefix', 'suffix' or 'none' of the csv's file code to each col

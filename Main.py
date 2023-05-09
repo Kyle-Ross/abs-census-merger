@@ -9,6 +9,13 @@ census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_
 # Config file location
 config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
 
+# Setting print options for dataframe QA outputs
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+pd.set_option('display.colheader_justify', 'center')
+pd.set_option('display.precision', 2)
+
 
 # Function to pretty print dictionaries
 def print_dict(target_dict):
@@ -59,6 +66,7 @@ def census_file_info(folder_path):
 def accumulate_census(target_folder_path,  # Where the census folder is
                       config_path,  # Where the config folder is saved
                       geo_type,  # What spatial aggregation sub-folder to target
+                      output_mode='all',  # Select the output mode,  'merge', 'pivot' or 'all'
                       output_folder='',  # Set the location of the output folder, will be the script location by default
                       col_desc='short',  # Can be 'short' or 'long'
                       col_affix='prefix'):  # Affix a 'prefix', 'suffix' or 'none' of the csv's file code to each col
@@ -85,6 +93,9 @@ def accumulate_census(target_folder_path,  # Where the census folder is
                 file_info_dict['filetype'] == ".csv":
             targeted_file_paths.append(file_info_dict)
 
+    # Secondary list for storing column information and the group value, to be used further on
+    col_group_list = []
+
     # Looping through the dictionaries, reading and filtering the resulting dataframes
     for file_dict in targeted_file_paths:
         # Getting the file path
@@ -96,22 +107,26 @@ def accumulate_census(target_folder_path,  # Where the census folder is
         # Saving the unfiltered df to the dict
         file_dict["unfiltered_df"] = unfiltered_df
 
-        # Creating a list of column names to keep from the config file, where index 0 is the old name and 1 is the new
+        # Creating a list of column names to keep from the config file
+        # index 0, is the old name, index 1 is the new col name, index 2 is the group identifier, 3 is the value_desc
         col_list_list = config_data[config_data['DATA_FILE_CODE'] == file_dict['nameparts']['file_code']] \
-            [['FIELD_SHORT', 'FIELD_LONG']].drop_duplicates().values.tolist()
+            [['FIELD_SHORT', 'FIELD_LONG', 'GROUP', 'VALUE_DESC']].drop_duplicates().values.tolist()
 
         # Looping through col list and putting it in a dictionary
         col_dict = {}
 
         for cols_list in col_list_list:
-            # Getting col names
+            # Getting variables from list
             old_col_name = cols_list[0]
+            new_col_name = cols_list[1]
+            col_group = cols_list[2]
+            value_desc = cols_list[3]
 
             # Setting the replacement column name conditionally depending on arguments
             if col_desc == 'short':
                 new_col_name = old_col_name
             elif col_desc == 'long':
-                new_col_name = cols_list[1]
+                new_col_name = new_col_name
             else:
                 print("col_desc must be either 'short or 'long' - incorrect value entered. Reverting to short.")
                 new_col_name = old_col_name
@@ -130,6 +145,16 @@ def accumulate_census(target_folder_path,  # Where the census folder is
 
             # Adding the old and new key combination to the dictionary
             col_dict[old_col_name] = new_col_name
+
+            # Adding all column group dictionary to the associated list
+            # Creating the dictionary
+            col_group_dict = {'old_col': old_col_name,
+                              'new_col': new_col_name,
+                              'group': col_group,
+                              'value_desc': value_desc}
+
+            # Appending that to the list
+            col_group_list.append(col_group_dict)
 
         # Getting a list with just the old col name
         old_col_list = [x[0] for x in col_list_list]
@@ -155,6 +180,10 @@ def accumulate_census(target_folder_path,  # Where the census folder is
     for a_dict in targeted_file_paths:
         filtered_df_list.append(a_dict["filtered_df"])
 
+    # -----------------
+    # Merge Output Prep
+    # -----------------
+
     # Merging the dataframes together
     # Create an empty dataframe to store the merged data
     merged_df = pd.DataFrame()
@@ -166,17 +195,96 @@ def accumulate_census(target_folder_path,  # Where the census folder is
         else:
             merged_df = pd.merge(merged_df, df, on=primary_key_col, validate='one_to_one')
 
-    # Create file name
-    current_dt = datetime.datetime.now().strftime("%Y-%m-%d %H-%M")
-    output_file_name = "Census Data" + "-" + geo_type + "_" + col_desc + "_" + col_affix + "-" + current_dt + ".csv"
+    # -----------------
+    # Pivot Concat Output Prep
+    # -----------------
 
-    # Output the csv
-    merged_df.to_csv(os.path.join(output_folder, output_file_name), index=False)
+    # Reworking the dictionary containing group and column information
+    # Defining the new structure as a dict of lists like {'group': ['col1', 'col2', 'col3'],...}
+    group_dict = {}
+
+    for col_group_dict in col_group_list:
+        group_key = col_group_dict['group']
+        new_col_value = col_group_dict['new_col']
+        if group_key not in group_dict:
+            group_dict[group_key] = []
+        if new_col_value not in group_dict[group_key]:
+            group_dict[group_key].append(new_col_value)
+
+    # ---------------------
+    # Pivot mode output ETL
+    # ---------------------
+
+    # Defining a list to contain output dataframes, which will be used to concat
+    pivoted_dfs_list = []
+
+    # Looping over the dictionary to subset, unpivot and create the new 'pivot' dataframes
+    for key_group, value_col_list in group_dict.copy().items():  # To avoid runtime errors to adding to a dict which being looped over
+
+        # Creating a new list that includes the id column
+        group_columns = value_col_list
+        group_columns.append(primary_key_col)
+
+        # Create a subset of the merged dataframe containing only columns from the group
+        new_df = merged_df[group_columns]
+
+        # Creating a basic dictionary with the old (key) and new names (value)
+        value_desc_dict = {}
+
+        for ref_dict in col_group_list:
+            value_desc_dict[f"{ref_dict['new_col']}"] = ref_dict['value_desc']
+
+        # Using that dictionary to rename columns
+        new_df = new_df.rename(columns=value_desc_dict)
+
+        # Getting all columns that are not the primary key column for the pivoting function
+        cols_to_unpivot = new_df.columns.difference([primary_key_col])
+
+        # Unpivot dataframe
+        new_df_unpivoted = new_df.melt(id_vars=[primary_key_col],
+                                       value_vars=cols_to_unpivot,
+                                       var_name=key_group,
+                                       value_name=f'{key_group} Count')
+
+        # Appending those dataframes to the results list
+        pivoted_dfs_list.append(new_df_unpivoted)
+
+    # Concat-ing all unpivoted dfs
+    pivot_concat_df = pd.concat(pivoted_dfs_list)
+
+    # -----------
+    # Creating File names
+    # -----------
+
+    # Create file names
+    current_dt = datetime.datetime.now().strftime("%Y-%m-%d %H-%M")
+
+    # Defining the end part
+    end_part = "-" + geo_type + "_" + col_desc + "_" + col_affix + "-" + current_dt + ".csv"
+
+    # File name for the merge output type
+    merge_output_fn = "Census Data - Merge" + end_part
+
+    # File name for the pivot concat output type
+    pivot_concat_output_fn = "Census Data - Pivot" + end_part
+
+    # Conditionally Output the csv
+    if output_mode == 'merge':
+        merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
+    elif output_mode == 'pivot':
+        pivot_concat_df.to_csv(os.path.join(output_folder, pivot_concat_output_fn), index=False)
+    elif output_mode == 'all':
+        merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
+        pivot_concat_df.to_csv(os.path.join(output_folder, pivot_concat_output_fn), index=False)
+    else:
+        print("output_mode must be 'merge', 'pivot' or 'all' - wrong value entered. Reverting to merge output")
+        merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
 
 
 # Calling the function
-accumulate_census(census_folder_path,
-                  config_file,
-                  'LGA',
+accumulate_census(target_folder_path=census_folder_path,
+                  config_path=config_file,
+                  geo_type='LGA',
+                  output_mode='all',
                   col_desc='long',
                   col_affix='prefix')
