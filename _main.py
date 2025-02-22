@@ -3,12 +3,6 @@ import datetime
 import json
 import os
 
-# Target folder path
-census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_AUS_short-header\2021 Census GCP All Geographies for AUS"
-
-# Config file location
-config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
-
 # Function to pretty print dictionaries
 def print_dict(target_dict):
     # Deals with dataframes in the dict
@@ -272,11 +266,19 @@ def accumulate_census(target_folder_path,  # Where the census folder is
         print("output_mode must be 'merge', 'pivot' or 'all' - wrong value entered. Reverting to merge output")
         merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
 
+if __name__ == "__main__":
+    # Test code
 
-# Calling the function
-accumulate_census(target_folder_path=census_folder_path,
-                  config_path=config_file,
-                  geo_type='LGA',
-                  output_mode='all',
-                  col_desc='long',
-                  col_affix='prefix')
+    # Target folder path
+    census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_AUS_short-header\2021 Census GCP All Geographies for AUS"
+
+    # Config file location
+    config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
+
+    # Calling the function
+    accumulate_census(target_folder_path=census_folder_path,
+                    config_path=config_file,
+                    geo_type='LGA',
+                    output_mode='all',
+                    col_desc='long',
+                    col_affix='prefix')
