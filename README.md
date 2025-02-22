@@ -30,3 +30,6 @@ accumulate_census(
 - Geo types include LGA, POA, SA1, SA2 etc
 - col_desc will determine whether column names are updated to unabbreviated versions via the config file
 - Use the metadata .xlsx file included in the datapack download to set up the config file with the fields you want
+
+## Next Steps
+This repository will be made into a Python library.
