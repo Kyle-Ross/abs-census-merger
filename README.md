@@ -6,9 +6,10 @@ A Python script which takes the census data pack from the ABS and instantly merg
 1. Download your desired [datapack](https://www.abs.gov.au/census/find-census-data/datapacks) on the ABS site
 2. Clone this repo
 3. Adjust desired files and fields in the config file
-4. Open Main.py in your desired IDE
-5. Set the path of the downloaded and extracted census folder at the top of the script with the `census_folder_path` variable. This must be the sub-folder containing the data - for example with the 2021 census this is the `'2021 Census GCP All Geographies for AUS'` folder
-6. Adjust the function parameters as needed at the bottom of the script with the pre-written function call
+4. Open a script in the main directory
+5. `from main import accumulate_census`
+5. Set the path of the downloaded and extracted census folder at the top of the function with the `census_folder_path` variable. This must be the sub-folder containing the data - for example with the 2021 census this is the `'2021 Census GCP All Geographies for AUS'` folder
+6. Adjust the function parameters as needed - you can start with the pre-written function call below
 7. Run the script
 
 ```Python
