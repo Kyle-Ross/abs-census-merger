@@ -270,10 +270,10 @@ if __name__ == "__main__":
     # Test code
 
     # Target folder path
-    census_folder_path = r"C:\Users\rossk\Github\abs-census-merger\2021_GCP_all_for_AUS_short-header\2021 Census GCP All Geographies for AUS"
+    census_folder_path = r"C:/Users/rossk/Github/abs-census-merger/2021_GCP_all_for_AUS_short-header/2021 Census GCP All Geographies for AUS"
 
     # Config file location
-    config_file = r"C:\Users\rossk\Github\abs-census-merger\config.csv"
+    config_file = r"C:/Users/rossk/Github/abs-census-merger/config.csv"
 
     # Calling the function
     accumulate_census(target_folder_path=census_folder_path,
