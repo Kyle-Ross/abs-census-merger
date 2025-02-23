@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "censuswrangler"
+version = "0.1.0"
+description = "A Python script which takes the census data pack from the ABS and instantly merges data across the many separate files. Allows you to specify files, fields and spatial aggregation against customizable settings in a config csv file."
+authors = ["Kyle Ross <107285758+Kyle-Ross@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
