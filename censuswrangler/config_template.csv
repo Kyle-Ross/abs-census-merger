@@ -1,0 +1,43 @@
+DATA_FILE_CODE,FIELD_SHORT,FIELD_LONG,VALUE_DESC,GROUP
+G01,Tot_P_M,Total_Persons_Males,Male,Gender
+G01,Tot_P_F,Total_Persons_Females,Female,Gender
+G01,Age_0_4_yr_M,Age_groups_0_4_years_Males,0 - 4 years,Age - Male
+G01,Age_0_4_yr_F,Age_groups_0_4_years_Females,0 - 4 years,Age - Female
+G01,Age_0_4_yr_P,Age_groups_0_4_years_Persons,0 - 4 years,Age - Person
+G01,Age_5_14_yr_M,Age_groups_5_14_years_Males,5 - 14 years,Age - Male
+G01,Age_5_14_yr_F,Age_groups_5_14_years_Females,5 - 14 years,Age - Female
+G01,Age_5_14_yr_P,Age_groups_5_14_years_Persons,5 - 14 years,Age - Person
+G01,Age_15_19_yr_M,Age_groups_15_19_years_Males,15 - 19 years,Age - Male
+G01,Age_15_19_yr_F,Age_groups_15_19_years_Females,15 - 19 years,Age - Female
+G01,Age_15_19_yr_P,Age_groups_15_19_years_Persons,15 - 19 years,Age - Person
+G01,Age_20_24_yr_M,Age_groups_20_24_years_Males,20 - 24 years,Age - Male
+G01,Age_20_24_yr_F,Age_groups_20_24_years_Females,20 - 24 years,Age - Female
+G01,Age_20_24_yr_P,Age_groups_20_24_years_Persons,20 - 24 years,Age - Person
+G01,Age_25_34_yr_M,Age_groups_25_34_years_Males,25 - 34 years,Age - Male
+G01,Age_25_34_yr_F,Age_groups_25_34_years_Females,25 - 34 years,Age - Female
+G01,Age_25_34_yr_P,Age_groups_25_34_years_Persons,25 - 34 years,Age - Person
+G01,Age_35_44_yr_M,Age_groups_35_44_years_Males,35 - 44 years,Age - Male
+G01,Age_35_44_yr_F,Age_groups_35_44_years_Females,35 - 44 years,Age - Female
+G01,Age_35_44_yr_P,Age_groups_35_44_years_Persons,35 - 44 years,Age - Person
+G01,Age_45_54_yr_M,Age_groups_45_54_years_Males,45 - 54 years,Age - Male
+G01,Age_45_54_yr_F,Age_groups_45_54_years_Females,45 - 54 years,Age - Female
+G01,Age_45_54_yr_P,Age_groups_45_54_years_Persons,45 - 54 years,Age - Person
+G01,Age_55_64_yr_M,Age_groups_55_64_years_Males,55 - 64 years,Age - Male
+G01,Age_55_64_yr_F,Age_groups_55_64_years_Females,55 - 64 years,Age - Female
+G01,Age_55_64_yr_P,Age_groups_55_64_years_Persons,55 - 64 years,Age - Person
+G01,Age_65_74_yr_M,Age_groups_65_74_years_Males,65 - 74 years,Age - Male
+G01,Age_65_74_yr_F,Age_groups_65_74_years_Females,65 - 74 years,Age - Female
+G01,Age_65_74_yr_P,Age_groups_65_74_years_Persons,65 - 74 years,Age - Person
+G01,Age_75_84_yr_M,Age_groups_75_84_years_Males,75 - 84 years,Age - Male
+G01,Age_75_84_yr_F,Age_groups_75_84_years_Females,75 - 84 years,Age - Female
+G01,Age_75_84_yr_P,Age_groups_75_84_years_Persons,75 - 84 years,Age - Person
+G01,Age_85ov_M,Age_groups_85_years_and_over_Males,> 85 years,Age - Male
+G01,Age_85ov_F,Age_groups_85_years_and_over_Females,> 85 years,Age - Female
+G01,Age_85ov_P,Age_groups_85_years_and_over_Persons,> 85 years,Age - Person
+G01,Indigenous_P_Tot_M,Aboriginal_and_or_Torres_Strait_Islander_Persons_Total_Males,Male,Indigenous Gender
+G01,Indigenous_P_Tot_F,Aboriginal_and_or_Torres_Strait_Islander_Persons_Total_Females,Female,Indigenous Gender
+G06,P_Tot_Marrd_reg_marrge,PERSONS_Total_Married_in_a_registered_marriage,Married,Relationship Type
+G06,P_Tot_Married_de_facto,PERSONS_Total_Married_in_a_de_facto_marriage,Couple,Relationship Type
+G06,P_Tot_Not_married,PERSONS_Total_Not_married,No relationship,Relationship Type
+G29,CF_ChU15_a_Total_F,Couple_family_with_children_under_15_and_Total_Families,Has children under 15,Couple Family Kids Y N
+G29,CF_no_ChU15_a_Total_F,Couple_family_with_no_children_under_15_and_Total_Families,Does not have children under 15,Couple Family Kids Y N

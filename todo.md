@@ -1,5 +1,5 @@
 - Config file:
-    - Create simplified sample config
+    - Create simplified sample config DONE
     - Create function for template csv deployment in user environment
     - Create function to check config format at runtime
 - Create function to download datapacks
