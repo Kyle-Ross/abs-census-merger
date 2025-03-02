@@ -2,11 +2,13 @@
 
 import os
 
+from icecream import ic
+
 from config import Config
 
 
 class Datapack:
-    """Class for working with the census datapack folder"""
+    """Class for working with selections of the census datapack folder"""
 
     def __init__(self, folder_path: str, geo_type: str, config: Config):
         self.folder_path = folder_path
@@ -50,11 +52,13 @@ class Datapack:
                 ]
         self.details = datapack_details
 
+    def summary(self):
+        """Prints a summary of the datapack selection"""
+        ic(datapack.details)
+
 
 if __name__ == "__main__":
-    from icecream import ic
-
     folder_path = r"E:/Data/2021_GCP_all_for_AUS_short-header/2021 Census GCP All Geographies for AUS"
     config = Config("censuswrangler/config_template.csv")
     datapack = Datapack(folder_path, "LGA", config)
-    ic(datapack.details)
+    datapack.summary()
