@@ -1,3 +1,8 @@
+"""
+This module provides the Census class, which encapsulates common configuration and datapack objects,
+and provides methods to gather, filter, join, and output census data based on specified configurations.
+"""
+
 from typing import Dict, Optional
 import copy
 import datetime
@@ -5,8 +10,8 @@ import os
 
 import pandas as pd
 
-from config import Config
-from datapack import Datapack
+from censuswrangler._config import Config
+from censuswrangler._datapack import Datapack
 
 
 class Census:
