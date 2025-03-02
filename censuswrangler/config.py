@@ -17,15 +17,18 @@ class Config:
         self.df: pd.DataFrame = pd.read_csv(config_path)
 
         # Check if the required columns are present
-        required_columns = [
+        _required_columns = [
             "DATA_FILE_CODE",
             "FIELD_SHORT",
             "FIELD_LONG",
             "VALUE_DESC",
             "GROUP",
         ]
-        for column in required_columns:
+        for column in _required_columns:
             assert column in self.df.columns, f"Missing required column: {column}"
+
+        # List all columns except data file code
+        self._output_columns: list = _required_columns[1:]
 
         # Cast all columns as strings
         self.df = self.df.astype(str)
