@@ -21,7 +21,7 @@ def accumulate_census(
         output_folder = os.path.dirname(os.path.abspath(__file__))
 
     # Getting the list of dictionaries with file info
-    file_dicts = datapack.info(target_folder_path)
+    file_dicts = datapack._compile_datapack_details(target_folder_path)
 
     # Getting config file
     config_data = pd.read_csv(config_path)
