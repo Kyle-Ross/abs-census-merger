@@ -14,6 +14,7 @@ class Datapack:
         self.folder_path = folder_path
 
         # Build a dictionary containing information of the files in the census datapack folder
+        # Each entry represents a file code / file
         datapack_details = []
         for root, directories, files in os.walk(folder_path):
             for filename in files:
