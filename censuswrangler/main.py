@@ -290,7 +290,7 @@ if __name__ == "__main__":
     # Test code
 
     # Target folder path
-    census_folder_path = r"C:/Users/rossk/Github/abs-census-merger/2021_GCP_all_for_AUS_short-header/2021 Census GCP All Geographies for AUS"
+    census_folder_path = r"E:/Data/2021_GCP_all_for_AUS_short-header/2021 Census GCP All Geographies for AUS"
 
     # Config file location
     config_file = r"censuswrangler/config_template.csv"
