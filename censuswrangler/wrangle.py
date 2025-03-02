@@ -8,21 +8,26 @@ from datapack import Datapack
 
 
 # Function to gather, filter & join specified census files
-def accumulate_census(
-    target_folder_path,  # Where the census folder is
+def wrangle(
+    census_folder_path,  # Where the census folder is
     config_path,  # Where the config folder is saved
     geo_type,  # What spatial aggregation sub-folder to target
-    output_mode="all",  # Select the output mode,  'merge', 'pivot' or 'all'
+    output_mode="all",  # Select the output mode, 'merge', 'pivot' or 'all'
     output_folder="",  # Set the location of the output folder, will be the script location by default
     col_desc="short",  # Can be 'short' or 'long'
-    col_affix="prefix",
-):  # Affix a 'prefix', 'suffix' or 'none' of the csv's file code to each col
+    col_affix="prefix",  # Affix a 'prefix', 'suffix' or 'none' of the csv's file code to each col
+):
     # Set the output folder to be a sub-folder of the script folder if unchanged
     if output_folder == "":
         output_folder = os.path.dirname(os.path.abspath(__file__))
 
+    # Load the config and datapack
     config = Config(config_path)
-    datapack = Datapack(target_folder_path, geo_type, config)
+    datapack = Datapack(census_folder_path, geo_type, config)
+
+    # -----------------
+    # Prepare target dataframes
+    # -----------------
 
     # List to store column, name
     col_details = []
@@ -117,16 +122,15 @@ def accumulate_census(
         # Saving the prepared_df df to the file_details dict, which is in turn saved inplace to datapack.details
         file_details["prepared_df"] = prepared_df
 
-    # # Adding the filtered dataframes to a list
-    prepared_dfs = [detail["prepared_df"] for detail in datapack.details]
-
     # -----------------
-    # Merge Output Prep
+    # Merging prepared dataframes together
     # -----------------
 
-    # Merging the dataframes together
     # Create an empty dataframe to store the merged data
     merged_df = pd.DataFrame()
+
+    # Get all prepared dataframes in a list
+    prepared_dfs = [detail["prepared_df"] for detail in datapack.details]
 
     # Loop through each dataframe in the list and merge with the 'merged_df'
     for df in prepared_dfs:
@@ -247,8 +251,8 @@ if __name__ == "__main__":
     config_file = r"censuswrangler/config_template.csv"
 
     # Calling the function
-    accumulate_census(
-        target_folder_path=census_folder_path,
+    wrangle(
+        census_folder_path=census_folder_path,
         config_path=config_file,
         geo_type="LGA",
         output_mode="all",

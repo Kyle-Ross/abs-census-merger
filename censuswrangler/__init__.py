@@ -1,5 +1,5 @@
-from censuswrangler.wrangle import accumulate_census
+from censuswrangler.wrangle import wrangle
 
 __all__ = [
-    "accumulate_census",
+    "wrangle",
 ]
