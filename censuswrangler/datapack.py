@@ -2,8 +2,10 @@
 
 import os
 
+from typing import List, Dict
 
-def info(folder_path):
+
+def info(folder_path) -> List[Dict]:
     """Build a dictionary containing information of the files in the census datapack folder"""
     # Get all file paths in the target folder
     file_paths = []
@@ -34,3 +36,10 @@ def info(folder_path):
 
     # Returning the result
     return file_paths
+
+
+if __name__ == "__main__":
+    from show_dict import pretty_dict
+
+    folder_path = r"E:/Data/2021_GCP_all_for_AUS_short-header/2021 Census GCP All Geographies for AUS"
+    pretty_dict(info(folder_path))
