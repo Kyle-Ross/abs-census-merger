@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+import copy
 import datetime
 import os
 
@@ -8,25 +10,63 @@ from datapack import Datapack
 
 
 class Census:
-    def __init__(self, census_folder_path, config_path, geo_type):
-        """Census class to manage common config and datapack objects, and the methods acting on them"""
-        self.census_folder_path = census_folder_path  # Where the census folder is
-        self.config_path = config_path  # Where the config file is saved
-        self.geo_type = geo_type  # What spatial aggregation sub-folder to target   
-        self.config = Config(config_path)
-        self.datapack = Datapack(census_folder_path, geo_type, self.config)
+    """Census class to encapsulate common config and datapack objects, and the methods acting on them"""
 
-    # Function to gather, filter & join specified census files
-    def wrangle(
+    def __init__(
         self,
-        output_mode="all",  # Select the output mode, 'merge', 'pivot' or 'all'
-        output_folder="",  # Set the location of the output folder, will be the script location by default
-        col_desc="short",  # Can be 'short' or 'long'
-        col_affix="prefix",  # Affix a 'prefix', 'suffix' or 'none' of the csv's file code to each col
+        census_folder_path: str,
+        config_path: str,
+        geo_type: str,
+        year: int,
+        col_type: str = "short",
+        affix_type: str = "prefix",
     ):
-        # Set the output folder to be a sub-folder of the script folder if unchanged
-        if output_folder == "":
-            output_folder = os.path.dirname(os.path.abspath(__file__))
+        self.census_folder_path: str = census_folder_path  # Where the census folder is
+        self.config_path: str = config_path  # Where the config file is saved
+        self.geo_type: str = geo_type  # What spatial aggregation sub-folder to target
+        self.year: int = year  # Helps find columns in the datapack, which have the census year as a suffix
+        self.col_type: str = col_type  # Can be 'short' or 'long'
+        self.affix_type: str = affix_type  # Affix a 'prefix', 'suffix' or 'none' of the csv's file code to each col, and put arg on file name
+        self.config: Config = Config(config_path)
+        self.datapack: Datapack = Datapack(census_folder_path, geo_type, self.config)
+        self._allowed_output_modes: Dict[Dict] = {
+            "merge": {
+                "requirement": "First run the Census.wrangle method with mode = 'merge'"
+            },
+            "pivot": {
+                "requirement": "First run the Census.wrangle method with mode = 'pivot'"
+            },
+            "all": {
+                "requirement": "First run the Census.wrangle method with mode = 'all'"
+            },
+        }
+
+        # Assertions
+        allowed_col_types = ("short", "long")
+        assert col_type in allowed_col_types, (
+            f"col_type argument '{col_type} not in allowed types {allowed_col_types}"
+        )
+
+        allowed_affix_types = ("prefix", "suffix", "none")
+        assert affix_type in allowed_affix_types, (
+            f"affix_type argument '{affix_type} not in allowed types {allowed_affix_types}"
+        )
+
+        # Dataframes to store the merged and pivoted data (once wrangle is called)
+        self.merged_df: Optional[pd.DataFrame] = None
+        self.pivoted_df: Optional[pd.DataFrame] = None
+
+    def _assert_mode_arg(self, mode):
+        """Internal function to check the mode is in the allowed values"""
+        allowed = self._allowed_output_modes.keys()
+        assert mode in allowed, (
+            f"mode argument '{mode}' not in allowed modes '{allowed}'"
+        )
+
+    def wrangle(self, mode):
+        """Function to gather, filter & join specified census files using the config and datapack objects in the census class"""
+
+        self._assert_mode_arg(mode)
 
         # ===========
         # Prepare target dataframes
@@ -65,9 +105,9 @@ class Census:
                 col_group = row[3]  # GROUP
 
                 # Setting the replacement column name conditionally depending on arguments
-                if col_desc == "short":
+                if self.col_type == "short":
                     new_col_name = old_col_name
-                elif col_desc == "long":
+                elif self.col_type == "long":
                     new_col_name = new_col_name
                 else:
                     print(
@@ -76,15 +116,15 @@ class Census:
                     new_col_name = old_col_name
 
                 # Adding a prefix or suffix depending on arguments
-                if col_affix == "prefix":
+                if self.affix_type == "prefix":
                     new_col_name = (
                         file_details["nameparts"]["file_code"] + "_" + new_col_name
                     )
-                elif col_affix == "suffix":
+                elif self.affix_type == "suffix":
                     new_col_name = (
                         new_col_name + "_" + file_details["nameparts"]["file_code"]
                     )
-                elif col_affix == "none":
+                elif self.affix_type == "none":
                     # Leave var unchanged
                     new_col_name = new_col_name
                 else:
@@ -114,7 +154,8 @@ class Census:
             file_details["target_columns"] = col_name_dict
 
             # Establishing the name of the primary key column
-            primary_key_col = str(self.geo_type) + "_CODE_2021"
+            # This is basically the geocode with a suffix
+            primary_key_col = f"{self.geo_type}_CODE_{self.year}"
 
             # Adding that to the list of old columns which is used to filter below
             old_col_list.insert(0, primary_key_col)
@@ -131,46 +172,29 @@ class Census:
         # Preparing outputs
         # ===========
 
-        # Common name element
-        current_dt = datetime.datetime.now().strftime("%Y-%m-%d %H-%M")
-        file_name_end = (
-            "-"
-            + self.geo_type
-            + "_"
-            + col_desc
-            + "_"
-            + col_affix
-            + "-"
-            + current_dt
-            + ".csv"
-        )
-
         # ------------
         # Merge mode
         # ------------
         # Create an empty dataframe to store the merged data
-        if output_mode == "merge" or output_mode == "all":
-            merged_df = pd.DataFrame()
-
+        # Used in the pivot mode as well
+        if mode == "merge" or mode == "pivot" or mode == "all":
             # Get all prepared dataframes in a list
             prepared_dfs = [detail["prepared_df"] for detail in self.datapack.details]
 
             # Loop through each dataframe in the list and merge with the 'merged_df'
+            # Use the first df as the base and merge the rest on the primary key column
             for df in prepared_dfs:
-                if merged_df.empty:
-                    merged_df = df
+                if self.merged_df is None:
+                    self.merged_df = df
                 else:
-                    merged_df = pd.merge(
-                        merged_df, df, on=primary_key_col, validate="one_to_one"
+                    self.merged_df = pd.merge(
+                        self.merged_df, df, on=primary_key_col, validate="one_to_one"
                     )
-
-            # File name for the merge output type
-            merge_output_file_name = "Census Data - Merge" + file_name_end
 
         # ------------
         # Pivot mode
         # ------------
-        if output_mode == "pivot" or output_mode == "all":
+        if mode == "pivot" or mode == "all":
             # Reworking the dictionary containing group and column information
             # Defining the new structure as a dict of lists like {'group': ['col1', 'col2', 'col3'],...}
             group_dict = {}
@@ -198,7 +222,7 @@ class Census:
                 group_columns.append(primary_key_col)
 
                 # Create a subset of the merged dataframe containing only columns from the group
-                new_df = merged_df[group_columns]
+                new_df = copy.deepcopy(self.merged_df[group_columns])
 
                 # Creating a basic dictionary with the old (key) and new names (value)
                 value_desc_dict = {}
@@ -226,46 +250,65 @@ class Census:
             # Concat-ing all unpivoted dfs
             pivot_concat_df = pd.concat(pivoted_dfs_list)
 
-            # File name for the pivot concat output type
-            pivot_concat_output_file_name = "Census Data - Pivot" + file_name_end
+            # Assign it to the class attribute
+            self.pivoted_df = pivot_concat_df
+
+    def to_csv(self, mode: str, output_folder: str):
+        """Function to output the csv files to a output folder"""
+
+        self._assert_mode_arg(mode)
+
+        # Check the folder directory
+        assert os.path.isdir(output_folder), (
+            f"The path '{output_folder}' is not a directory or does not exist."
+        )
+
+        # Common file name elements
+        current_dt = datetime.datetime.now().strftime("%Y-%m-%d %H-%M")
+        file_name_end = (
+            "-"
+            + self.geo_type
+            + "_"
+            + self.col_type
+            + "_"
+            + self.affix_type
+            + "-"
+            + current_dt
+            + ".csv"
+        )
+
+        # Set names for the output types
+        merge_name = "Census Data - Merge" + file_name_end
+        pivot_name = "Census Data - Pivot" + file_name_end
+
+        # Common csv output function
+        def df_to_csv(df, name, index=False):
+            df.to_csv(os.path.join(output_folder, name), index=index)
 
         # Conditionally Output the csv
-        if output_mode == "merge":
-            merged_df.to_csv(
-                os.path.join(output_folder, merge_output_file_name), index=False
-            )
-        elif output_mode == "pivot":
-            pivot_concat_df.to_csv(
-                os.path.join(output_folder, pivot_concat_output_file_name), index=False
-            )
-        elif output_mode == "all":
-            merged_df.to_csv(
-                os.path.join(output_folder, merge_output_file_name), index=False
-            )
-            pivot_concat_df.to_csv(
-                os.path.join(output_folder, pivot_concat_output_file_name), index=False
-            )
+        if mode == "merge":
+            df_to_csv(self.merged_df, merge_name)
+        elif mode == "pivot":
+            df_to_csv(self.pivoted_df, pivot_name)
+        elif mode == "all":
+            df_to_csv(self.merged_df, merge_name)
+            df_to_csv(self.pivoted_df, pivot_name)
         else:
-            print(
-                "output_mode must be 'merge', 'pivot' or 'all' - wrong value entered. Reverting to merge output"
-            )
-            merged_df.to_csv(
-                os.path.join(output_folder, merge_output_file_name), index=False
+            raise ValueError(
+                f"'{mode}' is invalid. mode must be one of allowed values {self._allowed_output_modes.keys()}"
             )
 
 
 if __name__ == "__main__":
-    # Test code
+    from icecream import ic
 
     census = Census(
         census_folder_path=r"E:/Data/2021_GCP_all_for_AUS_short-header/2021 Census GCP All Geographies for AUS",
         config_path=r"censuswrangler/config_template.csv",
         geo_type="LGA",
+        year=2021,
     )
 
-    # Calling the function
-    census.wrangle(
-        output_mode="all",
-        col_desc="long",
-        col_affix="prefix",
-    )
+    census.wrangle("all")
+    ic(census.merged_df)
+    census.to_csv("all", r"F:/Github/censuswrangler/test_output")
