@@ -310,5 +310,5 @@ if __name__ == "__main__":
     )
 
     census.wrangle("all")
-    ic(census.merged_df)
+    ic(census.merged_df.head(3))
     census.to_csv("all", r"F:/Github/censuswrangler/test_output")
