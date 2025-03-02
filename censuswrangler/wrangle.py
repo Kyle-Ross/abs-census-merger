@@ -28,14 +28,14 @@ def accumulate_census(
     col_details = []
 
     # Looping through the per-file-code dictionaries, reading and filtering the resulting dataframes per the config
-    for file_dict in datapack.details:
+    for file_details in datapack.details:
         # Prepare the dataframe
-        file_path = file_dict["full_path"]
+        file_path = file_details["full_path"]
         unfiltered_df = pd.read_csv(file_path)
-        file_dict["unfiltered_df"] = unfiltered_df
+        file_details["unfiltered_df"] = unfiltered_df
 
         # Grab the current file code
-        file_code = file_dict["nameparts"]["file_code"]
+        file_code = file_details["nameparts"]["file_code"]
 
         # Get the config, and select the rows that match the current file code
         # Save the df as a list of lists, where each list the values in the row
@@ -69,9 +69,13 @@ def accumulate_census(
 
             # Adding a prefix or suffix depending on arguments
             if col_affix == "prefix":
-                new_col_name = file_dict["nameparts"]["file_code"] + "_" + new_col_name
+                new_col_name = (
+                    file_details["nameparts"]["file_code"] + "_" + new_col_name
+                )
             elif col_affix == "suffix":
-                new_col_name = new_col_name + "_" + file_dict["nameparts"]["file_code"]
+                new_col_name = (
+                    new_col_name + "_" + file_details["nameparts"]["file_code"]
+                )
             elif col_affix == "none":
                 # Leave var unchanged
                 new_col_name = new_col_name
@@ -99,7 +103,7 @@ def accumulate_census(
         old_col_list = list(col_name_dict.keys())
 
         # Appending the target columns to the dictionary
-        file_dict["target_columns"] = col_name_dict
+        file_details["target_columns"] = col_name_dict
 
         # Establishing the name of the primary key column
         primary_key_col = str(geo_type) + "_CODE_2021"
@@ -108,16 +112,13 @@ def accumulate_census(
         old_col_list.insert(0, primary_key_col)
 
         # Renaming and filtering columns using the config data
-        filtered_df = unfiltered_df.loc[:, old_col_list].rename(columns=col_name_dict)
+        prepared_df = unfiltered_df.loc[:, old_col_list].rename(columns=col_name_dict)
 
-        # Saving the filtered df to the dict
-        file_dict["filtered_df"] = filtered_df
+        # Saving the prepared_df df to the file_details dict, which is in turn saved inplace to datapack.details
+        file_details["prepared_df"] = prepared_df
 
-    # Adding the filtered dataframes to a list
-    filtered_df_list = []
-
-    for a_dict in targeted_file_paths:
-        filtered_df_list.append(a_dict["filtered_df"])
+    # # Adding the filtered dataframes to a list
+    prepared_dfs = [detail["prepared_df"] for detail in datapack.details]
 
     # -----------------
     # Merge Output Prep
@@ -128,7 +129,7 @@ def accumulate_census(
     merged_df = pd.DataFrame()
 
     # Loop through each dataframe in the list and merge with the 'merged_df'
-    for df in filtered_df_list:
+    for df in prepared_dfs:
         if merged_df.empty:
             merged_df = df
         else:
