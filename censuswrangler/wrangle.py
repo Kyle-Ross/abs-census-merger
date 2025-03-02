@@ -25,9 +25,9 @@ def wrangle(
     config = Config(config_path)
     datapack = Datapack(census_folder_path, geo_type, config)
 
-    # -----------------
+    # ===========
     # Prepare target dataframes
-    # -----------------
+    # ===========
 
     # List to store column, name
     col_details = []
@@ -122,123 +122,117 @@ def wrangle(
         # Saving the prepared_df df to the file_details dict, which is in turn saved inplace to datapack.details
         file_details["prepared_df"] = prepared_df
 
-    # -----------------
-    # Merging prepared dataframes together
-    # -----------------
+    # ===========
+    # Preparing outputs
+    # ===========
 
-    # Create an empty dataframe to store the merged data
-    merged_df = pd.DataFrame()
-
-    # Get all prepared dataframes in a list
-    prepared_dfs = [detail["prepared_df"] for detail in datapack.details]
-
-    # Loop through each dataframe in the list and merge with the 'merged_df'
-    for df in prepared_dfs:
-        if merged_df.empty:
-            merged_df = df
-        else:
-            merged_df = pd.merge(
-                merged_df, df, on=primary_key_col, validate="one_to_one"
-            )
-
-    # -----------------
-    # Pivot Concat Output Prep
-    # -----------------
-
-    # Reworking the dictionary containing group and column information
-    # Defining the new structure as a dict of lists like {'group': ['col1', 'col2', 'col3'],...}
-    group_dict = {}
-
-    for col_detail in col_details:
-        group_key = col_detail["group"]
-        new_col_value = col_detail["new_col"]
-        if group_key not in group_dict:
-            group_dict[group_key] = []
-        if new_col_value not in group_dict[group_key]:
-            group_dict[group_key].append(new_col_value)
-
-    # ---------------------
-    # Pivot mode output ETL
-    # ---------------------
-
-    # Defining a list to contain output dataframes, which will be used to concat
-    pivoted_dfs_list = []
-
-    # Looping over the dictionary to subset, unpivot and create the new 'pivot' dataframes
-    for (
-        key_group,
-        value_col_list,
-    ) in (
-        group_dict.copy().items()
-    ):  # To avoid runtime errors to adding to a dict which being looped over
-        # Creating a new list that includes the id column
-        group_columns = value_col_list
-        group_columns.append(primary_key_col)
-
-        # Create a subset of the merged dataframe containing only columns from the group
-        new_df = merged_df[group_columns]
-
-        # Creating a basic dictionary with the old (key) and new names (value)
-        value_desc_dict = {}
-
-        for ref_dict in col_details:
-            value_desc_dict[f"{ref_dict['new_col']}"] = ref_dict["value_desc"]
-
-        # Using that dictionary to rename columns
-        new_df = new_df.rename(columns=value_desc_dict)
-
-        # Getting all columns that are not the primary key column for the pivoting function
-        cols_to_unpivot = new_df.columns.difference([primary_key_col])
-
-        # Unpivot dataframe
-        new_df_unpivoted = new_df.melt(
-            id_vars=[primary_key_col],
-            value_vars=cols_to_unpivot,
-            var_name=key_group,
-            value_name=f"{key_group} Value",
-        )
-
-        # Appending those dataframes to the results list
-        pivoted_dfs_list.append(new_df_unpivoted)
-
-    # Concat-ing all unpivoted dfs
-    pivot_concat_df = pd.concat(pivoted_dfs_list)
-
-    # -----------
-    # Creating File names
-    # -----------
-
-    # Create file names
+    # Common name element
     current_dt = datetime.datetime.now().strftime("%Y-%m-%d %H-%M")
-
-    # Defining the end part
-    end_part = (
+    file_name_end = (
         "-" + geo_type + "_" + col_desc + "_" + col_affix + "-" + current_dt + ".csv"
     )
 
-    # File name for the merge output type
-    merge_output_fn = "Census Data - Merge" + end_part
+    # ------------
+    # Merge mode
+    # ------------
+    # Create an empty dataframe to store the merged data
+    if output_mode == "merge" or output_mode == "all":
+        merged_df = pd.DataFrame()
 
-    # File name for the pivot concat output type
-    pivot_concat_output_fn = "Census Data - Pivot" + end_part
+        # Get all prepared dataframes in a list
+        prepared_dfs = [detail["prepared_df"] for detail in datapack.details]
+
+        # Loop through each dataframe in the list and merge with the 'merged_df'
+        for df in prepared_dfs:
+            if merged_df.empty:
+                merged_df = df
+            else:
+                merged_df = pd.merge(
+                    merged_df, df, on=primary_key_col, validate="one_to_one"
+                )
+
+        # File name for the merge output type
+        merge_output_file_name = "Census Data - Merge" + file_name_end
+
+    # ------------
+    # Pivot mode
+    # ------------
+    if output_mode == "pivot" or output_mode == "all":
+        # Reworking the dictionary containing group and column information
+        # Defining the new structure as a dict of lists like {'group': ['col1', 'col2', 'col3'],...}
+        group_dict = {}
+
+        for col_detail in col_details:
+            group_key = col_detail["group"]
+            new_col_value = col_detail["new_col"]
+            if group_key not in group_dict:
+                group_dict[group_key] = []
+            if new_col_value not in group_dict[group_key]:
+                group_dict[group_key].append(new_col_value)
+
+        # Defining a list to contain output dataframes, which will be used to concat
+        pivoted_dfs_list = []
+
+        # Looping over the dictionary to subset, unpivot and create the new 'pivot' dataframes
+        for (
+            key_group,
+            value_col_list,
+        ) in (
+            group_dict.copy().items()
+        ):  # To avoid runtime errors to adding to a dict which being looped over
+            # Creating a new list that includes the id column
+            group_columns = value_col_list
+            group_columns.append(primary_key_col)
+
+            # Create a subset of the merged dataframe containing only columns from the group
+            new_df = merged_df[group_columns]
+
+            # Creating a basic dictionary with the old (key) and new names (value)
+            value_desc_dict = {}
+
+            for ref_dict in col_details:
+                value_desc_dict[f"{ref_dict['new_col']}"] = ref_dict["value_desc"]
+
+            # Using that dictionary to rename columns
+            new_df = new_df.rename(columns=value_desc_dict)
+
+            # Getting all columns that are not the primary key column for the pivoting function
+            cols_to_unpivot = new_df.columns.difference([primary_key_col])
+
+            # Unpivot dataframe
+            new_df_unpivoted = new_df.melt(
+                id_vars=[primary_key_col],
+                value_vars=cols_to_unpivot,
+                var_name=key_group,
+                value_name=f"{key_group} Value",
+            )
+
+            # Appending those dataframes to the results list
+            pivoted_dfs_list.append(new_df_unpivoted)
+
+        # Concat-ing all unpivoted dfs
+        pivot_concat_df = pd.concat(pivoted_dfs_list)
+
+        # File name for the pivot concat output type
+        pivot_concat_output_file_name = "Census Data - Pivot" + file_name_end
 
     # Conditionally Output the csv
     if output_mode == "merge":
-        merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
+        merged_df.to_csv(os.path.join(output_folder, merge_output_file_name), index=False)
     elif output_mode == "pivot":
         pivot_concat_df.to_csv(
-            os.path.join(output_folder, pivot_concat_output_fn), index=False
+            os.path.join(output_folder, pivot_concat_output_file_name), index=False
         )
     elif output_mode == "all":
-        merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
+        merged_df.to_csv(os.path.join(output_folder, merge_output_file_name), index=False)
         pivot_concat_df.to_csv(
-            os.path.join(output_folder, pivot_concat_output_fn), index=False
+            os.path.join(output_folder, pivot_concat_output_file_name), index=False
         )
     else:
         print(
             "output_mode must be 'merge', 'pivot' or 'all' - wrong value entered. Reverting to merge output"
         )
-        merged_df.to_csv(os.path.join(output_folder, merge_output_fn), index=False)
+        merged_df.to_csv(os.path.join(output_folder, merge_output_file_name), index=False)
 
 
 if __name__ == "__main__":
