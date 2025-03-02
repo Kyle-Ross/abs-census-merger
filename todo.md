@@ -1,8 +1,5 @@
 - Config file:
-    - Create simplified sample config DONE
-    - Create function for template csv deployment in user environment
-    - Create function to check config format at runtime
-- Create function to download datapacks
-- In main function add clear assert / catch for each argument
-- Publish to PyPi
+    - Census method to check config format (or check readiness)
+    - Census method to create config template at path
 - Update README.md
+- Publish to PyPi
