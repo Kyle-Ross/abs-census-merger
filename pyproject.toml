@@ -11,6 +11,9 @@ python = "^3.12"
 pandas = "2.2.3"
 
 
+[tool.poetry.group.dev.dependencies]
+icecream = "^2.1.4"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
