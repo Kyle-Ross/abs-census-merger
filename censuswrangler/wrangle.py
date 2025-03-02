@@ -9,19 +9,16 @@ from datapack import Datapack
 
 class Census:
     def __init__(self, census_folder_path, config_path, geo_type):
-        # Where the census folder is
-        self.census_folder_path = census_folder_path
-        # Where the config file is saved
-        self.config_path = config_path
-        # Prepare the config object
+        """Census class to manage common config and datapack objects, and the methods acting on them"""
+        self.census_folder_path = census_folder_path  # Where the census folder is
+        self.config_path = config_path  # Where the config file is saved
+        self.geo_type = geo_type  # What spatial aggregation sub-folder to target   
         self.config = Config(config_path)
-        # Prepare the datapack object
         self.datapack = Datapack(census_folder_path, geo_type, self.config)
 
     # Function to gather, filter & join specified census files
     def wrangle(
         self,
-        geo_type,  # What spatial aggregation sub-folder to target
         output_mode="all",  # Select the output mode, 'merge', 'pivot' or 'all'
         output_folder="",  # Set the location of the output folder, will be the script location by default
         col_desc="short",  # Can be 'short' or 'long'
@@ -117,7 +114,7 @@ class Census:
             file_details["target_columns"] = col_name_dict
 
             # Establishing the name of the primary key column
-            primary_key_col = str(geo_type) + "_CODE_2021"
+            primary_key_col = str(self.geo_type) + "_CODE_2021"
 
             # Adding that to the list of old columns which is used to filter below
             old_col_list.insert(0, primary_key_col)
@@ -138,7 +135,7 @@ class Census:
         current_dt = datetime.datetime.now().strftime("%Y-%m-%d %H-%M")
         file_name_end = (
             "-"
-            + geo_type
+            + self.geo_type
             + "_"
             + col_desc
             + "_"
@@ -268,7 +265,6 @@ if __name__ == "__main__":
 
     # Calling the function
     census.wrangle(
-        geo_type="LGA",
         output_mode="all",
         col_desc="long",
         col_affix="prefix",
