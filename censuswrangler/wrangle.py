@@ -3,7 +3,8 @@ import os
 
 import pandas as pd
 
-import datapack
+from config import Config
+from datapack import Datapack
 
 
 # Function to gather, filter & join specified census files
@@ -20,60 +21,38 @@ def accumulate_census(
     if output_folder == "":
         output_folder = os.path.dirname(os.path.abspath(__file__))
 
-    # Getting the list of dictionaries with file info
-    file_dicts = datapack._compile_datapack_details(target_folder_path)
-
-    # Getting config file
-    config_data = pd.read_csv(config_path)
-
-    # List of unique data file codes in the config
-    distinct_file_codes = config_data["DATA_FILE_CODE"].unique().tolist()
-
-    # Reducing the list to only the target csvs based on the config file
-    targeted_file_paths = []
-
-    for file_info_dict in file_dicts:
-        file_info_dict["nameparts"]["file_code"]
-        if (
-            file_info_dict["nameparts"]["geo_type"] == geo_type
-            and file_info_dict["nameparts"]["file_code"] in distinct_file_codes
-            and file_info_dict["filetype"] == ".csv"
-        ):
-            targeted_file_paths.append(file_info_dict)
+    config = Config(config_path)
+    datapack = Datapack(target_folder_path, geo_type, config)
 
     # Secondary list for storing column information and the group value, to be used further on
     col_group_list = []
 
-    # Looping through the dictionaries, reading and filtering the resulting dataframes
-    for file_dict in targeted_file_paths:
-        # Getting the file path
+    # Looping through the per-file-code dictionaries, reading and filtering the resulting dataframes per the config
+    for file_dict in datapack.details:
+        # Prepare the dataframe
         file_path = file_dict["full_path"]
-
-        # Opening the csv as a df
         unfiltered_df = pd.read_csv(file_path)
-
-        # Saving the unfiltered df to the dict
         file_dict["unfiltered_df"] = unfiltered_df
 
-        # Creating a list of column names to keep from the config file
-        # index 0, is the old name, index 1 is the new col name, index 2 is the group identifier, 3 is the value_desc
-        col_list_list = (
-            config_data[
-                config_data["DATA_FILE_CODE"] == file_dict["nameparts"]["file_code"]
-            ][["FIELD_SHORT", "FIELD_LONG", "GROUP", "VALUE_DESC"]]
-            .drop_duplicates()
-            .values.tolist()
-        )
+        # Grab the current file code
+        file_code = file_dict["nameparts"]["file_code"]
+
+        # Get the config, and select the rows that match the current file code
+        # Save the df as a list of lists, where each list the values in the row
+        df = config.df
+        df = df[df["DATA_FILE_CODE"] == file_code]
+        df = df.drop(columns=["DATA_FILE_CODE"])
+        config_rows = df.values.tolist()
 
         # Looping through col list and putting it in a dictionary
         col_dict = {}
 
-        for cols_list in col_list_list:
+        for cols_list in config_rows:
             # Getting variables from list
-            old_col_name = cols_list[0]
-            new_col_name = cols_list[1]
-            col_group = cols_list[2]
-            value_desc = cols_list[3]
+            old_col_name = cols_list[0]  # FIELD_SHORT
+            new_col_name = cols_list[1]  # FIELD_LONG
+            value_desc = cols_list[2]  # VALUE_DESC
+            col_group = cols_list[3]  # GROUP
 
             # Setting the replacement column name conditionally depending on arguments
             if col_desc == "short":
@@ -116,7 +95,7 @@ def accumulate_census(
             col_group_list.append(col_group_dict)
 
         # Getting a list with just the old col name
-        old_col_list = [x[0] for x in col_list_list]
+        old_col_list = [x[0] for x in keep_columns]
 
         # Appending the target columns to the dictionary
         file_dict["target_columns"] = col_dict
