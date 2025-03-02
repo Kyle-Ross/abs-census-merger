@@ -1,6 +1,5 @@
 """Functions for working with the census datapack folder"""
 
-import copy
 import os
 
 from icecream import ic
@@ -15,7 +14,6 @@ class Datapack:
         self.folder_path = folder_path
 
         # Build a dictionary containing information of the files in the census datapack folder
-        datapack_details_unselected = []
         datapack_details = []
         for root, directories, files in os.walk(folder_path):
             for filename in files:
@@ -40,9 +38,7 @@ class Datapack:
                     "full_path": file_path,
                 }
                 # Add the dictionary to the list
-                datapack_details_unselected.append(file_dict)
-                datapack_details = copy.deepcopy(datapack_details_unselected)
-
+                datapack_details.append(file_dict)
                 # Filter the list to only include the target geo_type and data file codes
                 datapack_details = [
                     file_info_dict
@@ -54,9 +50,6 @@ class Datapack:
                         and file_info_dict["filetype"] == ".csv"
                     )
                 ]
-        # Details for everything in the datapack
-        self._details_unselected = datapack_details_unselected
-        # Details only for the selected files
         self.details = datapack_details
 
     def summary(self):
