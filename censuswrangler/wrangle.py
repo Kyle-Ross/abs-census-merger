@@ -24,8 +24,8 @@ def accumulate_census(
     config = Config(config_path)
     datapack = Datapack(target_folder_path, geo_type, config)
 
-    # Secondary list for storing column information and the group value, to be used further on
-    col_group_list = []
+    # List to store column, name
+    col_details = []
 
     # Looping through the per-file-code dictionaries, reading and filtering the resulting dataframes per the config
     for file_dict in datapack.details:
@@ -44,15 +44,17 @@ def accumulate_census(
         df = df.drop(columns=["DATA_FILE_CODE"])
         config_rows = df.values.tolist()
 
-        # Looping through col list and putting it in a dictionary
-        col_dict = {}
+        # Dictorary to store the old and new column names before renaming
+        col_name_dict = {}
 
-        for cols_list in config_rows:
+        # Looping over the list of config rows
+        # Prepares a dictionary mainly used to create new column names depending on conditions
+        for row in config_rows:
             # Getting variables from list
-            old_col_name = cols_list[0]  # FIELD_SHORT
-            new_col_name = cols_list[1]  # FIELD_LONG
-            value_desc = cols_list[2]  # VALUE_DESC
-            col_group = cols_list[3]  # GROUP
+            old_col_name = row[0]  # FIELD_SHORT
+            new_col_name = row[1]  # FIELD_LONG
+            value_desc = row[2]  # VALUE_DESC
+            col_group = row[3]  # GROUP
 
             # Setting the replacement column name conditionally depending on arguments
             if col_desc == "short":
@@ -77,14 +79,13 @@ def accumulate_census(
                 print(
                     "col_desc must be 'prefix', 'suffix' or 'none' - incorrect value entered. Reverting to none."
                 )
-                # Do nothing
 
-            # Adding the old and new key combination to the dictionary
-            col_dict[old_col_name] = new_col_name
+            # Adding the old and new key combination to the outer dictionary
+            col_name_dict[old_col_name] = new_col_name
 
             # Adding all column group dictionary to the associated list
             # Creating the dictionary
-            col_group_dict = {
+            col_detail = {
                 "old_col": old_col_name,
                 "new_col": new_col_name,
                 "group": col_group,
@@ -92,13 +93,13 @@ def accumulate_census(
             }
 
             # Appending that to the list
-            col_group_list.append(col_group_dict)
+            col_details.append(col_detail)
 
-        # Getting a list with just the old col name
-        old_col_list = [x[0] for x in keep_columns]
+        # Getting a list with just the old col names (which are the keys)
+        old_col_list = list(col_name_dict.keys())
 
         # Appending the target columns to the dictionary
-        file_dict["target_columns"] = col_dict
+        file_dict["target_columns"] = col_name_dict
 
         # Establishing the name of the primary key column
         primary_key_col = str(geo_type) + "_CODE_2021"
@@ -107,7 +108,7 @@ def accumulate_census(
         old_col_list.insert(0, primary_key_col)
 
         # Renaming and filtering columns using the config data
-        filtered_df = unfiltered_df.loc[:, old_col_list].rename(columns=col_dict)
+        filtered_df = unfiltered_df.loc[:, old_col_list].rename(columns=col_name_dict)
 
         # Saving the filtered df to the dict
         file_dict["filtered_df"] = filtered_df
@@ -143,9 +144,9 @@ def accumulate_census(
     # Defining the new structure as a dict of lists like {'group': ['col1', 'col2', 'col3'],...}
     group_dict = {}
 
-    for col_group_dict in col_group_list:
-        group_key = col_group_dict["group"]
-        new_col_value = col_group_dict["new_col"]
+    for col_detail in col_details:
+        group_key = col_detail["group"]
+        new_col_value = col_detail["new_col"]
         if group_key not in group_dict:
             group_dict[group_key] = []
         if new_col_value not in group_dict[group_key]:
@@ -175,7 +176,7 @@ def accumulate_census(
         # Creating a basic dictionary with the old (key) and new names (value)
         value_desc_dict = {}
 
-        for ref_dict in col_group_list:
+        for ref_dict in col_details:
             value_desc_dict[f"{ref_dict['new_col']}"] = ref_dict["value_desc"]
 
         # Using that dictionary to rename columns
